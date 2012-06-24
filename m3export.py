@@ -21,10 +21,12 @@
 
 if "bpy" in locals():
     import imp
-    if "generateM3Library" in locals():
-        imp.reload(generateM3Library)
-from . import generateM3Library
-generateM3Library.generateM3Library()
+
+# reenable this code in each addon file to make them generate the m3.py library dynamically
+#    if "generateM3Library" in locals():
+#        imp.reload(generateM3Library)
+#from . import generateM3Library
+#generateM3Library.generateM3Library()
 
 if "bpy" in locals():
     import imp
