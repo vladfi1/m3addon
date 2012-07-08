@@ -8354,11 +8354,11 @@ class LITEV7:
     tagName = "LITE"
     tagVersion = 7
     size = 212
-    structFormat = struct.Struct("<B1sB21s12s16s20s108sf8s20s")
-    fields = ["lightType", "unknown1", "lightBone", "unknown2", "lightColor", "unknown3", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]
+    structFormat = struct.Struct("<B1sB1sI8s36s20s108sf8s20s")
+    fields = ["lightType", "unknown1", "lightBone", "unknown2", "lightFlags", "unknown3", "lightColor", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]
 
     def __setattr__(self, name, value):
-        if name in ["lightType", "unknown1", "lightBone", "unknown2", "lightColor", "unknown3", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]:
+        if name in ["lightType", "unknown1", "lightBone", "unknown2", "lightFlags", "unknown3", "lightColor", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]:
             object.__setattr__(self, name, value)
         else:
             raise NoSuchAttributeException(name)
@@ -8366,7 +8366,7 @@ class LITEV7:
     def __str__(self):
         s = "{"
         first = True
-        for key in ["lightType", "unknown1", "lightBone", "unknown2", "lightColor", "unknown3", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]:
+        for key in ["lightType", "unknown1", "lightBone", "unknown2", "lightFlags", "unknown3", "lightColor", "lightIntensity", "unknown4", "range", "unknown5", "hotSpot"]:
             if first:
                 first = False
             else:
@@ -8393,17 +8393,19 @@ class LITEV7:
             self.unknown1 = l[1]
             self.lightBone = l[2]
             self.unknown2 = l[3]
-            self.lightColor = VEC3V0(rawBytes=l[4])
+            self.lightFlags = l[4]
             self.unknown3 = l[5]
-            self.lightIntensity = FloatAnimationReference(rawBytes=l[6])
-            self.unknown4 = l[7]
-            self.range = l[8]
-            self.unknown5 = l[9]
-            self.hotSpot = FloatAnimationReference(rawBytes=l[10])
+            self.lightColor = Vector3AnimationReference(rawBytes=l[6])
+            self.lightIntensity = FloatAnimationReference(rawBytes=l[7])
+            self.unknown4 = l[8]
+            self.range = l[9]
+            self.unknown5 = l[10]
+            self.hotSpot = FloatAnimationReference(rawBytes=l[11])
         if (readable == None) and (rawBytes == None):
             self.unknown1 = bytes(1)
-            self.unknown2 = bytes(21)
-            self.unknown3 = bytes(16)
+            self.unknown2 = bytes(1)
+            self.lightFlags = 0x08
+            self.unknown3 = bytes(8)
             self.unknown4 = bytes(108)
             self.unknown5 = bytes(8)
             pass
@@ -8419,7 +8421,7 @@ class LITEV7:
         return list
     
     def toBytes(self):
-        return LITEV7.structFormat.pack(self.lightType, self.unknown1, self.lightBone, self.unknown2, self.lightColor.toBytes(), self.unknown3, self.lightIntensity.toBytes(), self.unknown4, self.range, self.unknown5, self.hotSpot.toBytes())
+        return LITEV7.structFormat.pack(self.lightType, self.unknown1, self.lightBone, self.unknown2, self.lightFlags, self.unknown3, self.lightColor.toBytes(), self.lightIntensity.toBytes(), self.unknown4, self.range, self.unknown5, self.hotSpot.toBytes())
     
     @staticmethod
     def rawBytesForOneOrMore(oneOrMore):
@@ -8451,7 +8453,7 @@ class LITEV7:
     def createEmptyArray():
         return []
     
-    fieldToBitMaskMapMap = {"lightColor": {}, "lightBone": {}, "lightType": {}, "hotSpot": {}, "unknown2": {}, "unknown3": {}, "range": {}, "unknown1": {}, "unknown4": {}, "unknown5": {}, "lightIntensity": {}}
+    fieldToBitMaskMapMap = {"lightColor": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "lightBone": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "unknown5": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "lightType": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "hotSpot": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "unknown2": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "unknown3": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "range": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "unknown1": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "unknown4": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "lightFlags": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}, "lightIntensity": {"turnOn":0x8, "unknownFlag1":0x2, "unknownFlag2":0x4, "shadowCast":0x1}}
     
     def getNamedBit(self, field, bitName):
         mask = LITEV7.fieldToBitMaskMapMap[field][bitName]
@@ -8469,7 +8471,7 @@ class LITEV7:
     def getBitNameMaskPairs(self, field):
         return LITEV7.fieldToBitMaskMapMap[field].items()
     
-    fieldToTypeInfoMap = {"lightType":FieldTypeInfo("uint8",None, False), "unknown1":FieldTypeInfo(None,None, False), "lightBone":FieldTypeInfo("uint8",None, False), "unknown2":FieldTypeInfo(None,None, False), "lightColor":FieldTypeInfo("VEC3V0",VEC3V0, False), "unknown3":FieldTypeInfo(None,None, False), "lightIntensity":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "unknown4":FieldTypeInfo(None,None, False), "range":FieldTypeInfo("float",None, False), "unknown5":FieldTypeInfo(None,None, False), "hotSpot":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False)}
+    fieldToTypeInfoMap = {"lightType":FieldTypeInfo("uint8",None, False), "unknown1":FieldTypeInfo(None,None, False), "lightBone":FieldTypeInfo("uint8",None, False), "unknown2":FieldTypeInfo(None,None, False), "lightFlags":FieldTypeInfo("uint32",None, False), "unknown3":FieldTypeInfo(None,None, False), "lightColor":FieldTypeInfo("Vector3AnimationReference",Vector3AnimationReference, False), "lightIntensity":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "unknown4":FieldTypeInfo(None,None, False), "range":FieldTypeInfo("float",None, False), "unknown5":FieldTypeInfo(None,None, False), "hotSpot":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False)}
     @staticmethod
     def getFieldTypeInfo(fieldName):
         return LITEV7.fieldToTypeInfoMap[fieldName]
@@ -8492,15 +8494,19 @@ class LITEV7:
             raise Exception("%s is not an int" % (fieldId))
         fieldId = id + ".unknown2"
 
-        if (type(instance.unknown2) != bytes) or (len(instance.unknown2) != 21):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "21"))
-        fieldId = id + ".lightColor"
+        if (type(instance.unknown2) != bytes) or (len(instance.unknown2) != 1):
+            raise Exception("%s is not an bytes object of size %s" % (fieldId, "1"))
+        fieldId = id + ".lightFlags"
 
-        VEC3V0.validateInstance(instance.lightColor, fieldId)
+        if (type(instance.lightFlags) != int):
+            raise Exception("%s is not an int" % (fieldId))
         fieldId = id + ".unknown3"
 
-        if (type(instance.unknown3) != bytes) or (len(instance.unknown3) != 16):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "16"))
+        if (type(instance.unknown3) != bytes) or (len(instance.unknown3) != 8):
+            raise Exception("%s is not an bytes object of size %s" % (fieldId, "8"))
+        fieldId = id + ".lightColor"
+
+        Vector3AnimationReference.validateInstance(instance.lightColor, fieldId)
         fieldId = id + ".lightIntensity"
 
         FloatAnimationReference.validateInstance(instance.lightIntensity, fieldId)
@@ -9085,7 +9091,7 @@ class LAYRV22:
     def createEmptyArray():
         return []
     
-    fieldToBitMaskMapMap = {"alphaFlags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "color": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvTiling": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvSource": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvAngle": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown2": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown3": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown0": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown1": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown6": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown7": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown4": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown5": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown8": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown9": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintStart": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintCutout": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "imagePath": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown10": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown11": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintStrength": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown15": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvOffset": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "brightMult": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "brightness": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "midtoneOffset": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintFlags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "flags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x200, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}}
+    fieldToBitMaskMapMap = {"alphaFlags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "color": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvTiling": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvSource": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvAngle": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown2": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown3": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown0": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown1": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown6": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown7": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown4": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown5": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown8": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown9": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintStart": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintCutout": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "imagePath": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown10": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown11": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintStrength": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "unknown15": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "uvOffset": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "brightMult": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "brightness": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "midtoneOffset": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "tintFlags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}, "flags": {"alphaOnly":0x2, "alphaBasedShading":0x4, "colorEnabled":0x400, "useTint":0x1, "tintAlpha":0x2, "alphaAsTeamColor":0x1, "textureWrapY":0x8, "textureWrapX":0x4}}
     
     def getNamedBit(self, field, bitName):
         mask = LAYRV22.fieldToBitMaskMapMap[field][bitName]
@@ -9987,12 +9993,10 @@ class CMP_V2:
             l = CMP_V2.structFormat.unpack(rawBytes)
             self.name = Reference(rawBytes=l[0])
             self.unknown = l[1]
-            if self.unknown != int(0):
-             raise Exception("CMP_V2.unknown has value %s instead of the expected value int(0)" % self.unknown)
             self.sections = Reference(rawBytes=l[2])
         if (readable == None) and (rawBytes == None):
             self.name = CHARV0.createEmptyArray()
-            self.unknown = int(0)
+            self.unknown = 0
             self.sections = CMS_V0.createEmptyArray()
             pass
     @staticmethod
@@ -10242,11 +10246,11 @@ class VOL_V0:
     tagName = "VOL_"
     tagVersion = 0
     size = 84
-    structFormat = struct.Struct("<12sI4sIIfff12s12s12s4s4s")
-    fields = ["name", "unknown", "unknownSection1", "unknownSection4", "unknownSection9", "volumeDensity", "unknownSection7", "unknownSection8", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknownSection2", "unknownSection3"]
+    structFormat = struct.Struct("<12sII20s12s12s12sII")
+    fields = ["name", "unknown0", "unknown1", "volumeDensity", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknown2", "unknown3"]
 
     def __setattr__(self, name, value):
-        if name in ["name", "unknown", "unknownSection1", "unknownSection4", "unknownSection9", "volumeDensity", "unknownSection7", "unknownSection8", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknownSection2", "unknownSection3"]:
+        if name in ["name", "unknown0", "unknown1", "volumeDensity", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknown2", "unknown3"]:
             object.__setattr__(self, name, value)
         else:
             raise NoSuchAttributeException(name)
@@ -10254,7 +10258,7 @@ class VOL_V0:
     def __str__(self):
         s = "{"
         first = True
-        for key in ["name", "unknown", "unknownSection1", "unknownSection4", "unknownSection9", "volumeDensity", "unknownSection7", "unknownSection8", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknownSection2", "unknownSection3"]:
+        for key in ["name", "unknown0", "unknown1", "volumeDensity", "colorDefiningLayer", "unknownLayer2", "unknownLayer3", "unknown2", "unknown3"]:
             if first:
                 first = False
             else:
@@ -10310,27 +10314,31 @@ class VOL_V0:
         if rawBytes != None:
             l = VOL_V0.structFormat.unpack(rawBytes)
             self.name = Reference(rawBytes=l[0])
-            self.unknown = l[1]
-            self.unknownSection1 = l[2]
-            self.unknownSection4 = l[3]
-            self.unknownSection9 = l[4]
-            self.volumeDensity = l[5]
-            self.unknownSection7 = l[6]
-            self.unknownSection8 = l[7]
-            self.colorDefiningLayer = Reference(rawBytes=l[8])
-            self.unknownLayer2 = Reference(rawBytes=l[9])
-            self.unknownLayer3 = Reference(rawBytes=l[10])
-            self.unknownSection2 = l[11]
-            self.unknownSection3 = l[12]
+            self.unknown0 = l[1]
+            if self.unknown0 != int(0):
+             raise Exception("VOL_V0.unknown0 has value %s instead of the expected value int(0)" % self.unknown0)
+            self.unknown1 = l[2]
+            if self.unknown1 != int(0):
+             raise Exception("VOL_V0.unknown1 has value %s instead of the expected value int(0)" % self.unknown1)
+            self.volumeDensity = FloatAnimationReference(rawBytes=l[3])
+            self.colorDefiningLayer = Reference(rawBytes=l[4])
+            self.unknownLayer2 = Reference(rawBytes=l[5])
+            self.unknownLayer3 = Reference(rawBytes=l[6])
+            self.unknown2 = l[7]
+            if self.unknown2 != int(0):
+             raise Exception("VOL_V0.unknown2 has value %s instead of the expected value int(0)" % self.unknown2)
+            self.unknown3 = l[8]
+            if self.unknown3 != int(0x20):
+             raise Exception("VOL_V0.unknown3 has value %s instead of the expected value int(0x20)" % self.unknown3)
         if (readable == None) and (rawBytes == None):
             self.name = CHARV0.createEmptyArray()
-            self.unknown = 0
-            self.unknownSection1 = bytes(4)
+            self.unknown0 = int(0)
+            self.unknown1 = int(0)
             self.colorDefiningLayer = LAYRV22.createEmptyArray()
             self.unknownLayer2 = LAYRV22.createEmptyArray()
             self.unknownLayer3 = LAYRV22.createEmptyArray()
-            self.unknownSection2 = bytes(4)
-            self.unknownSection3 = bytes(4)
+            self.unknown2 = int(0)
+            self.unknown3 = int(0x20)
             pass
     @staticmethod
     def createInstances(rawBytes, count):
@@ -10344,7 +10352,7 @@ class VOL_V0:
         return list
     
     def toBytes(self):
-        return VOL_V0.structFormat.pack(self.name.toBytes(), self.unknown, self.unknownSection1, self.unknownSection4, self.unknownSection9, self.volumeDensity, self.unknownSection7, self.unknownSection8, self.colorDefiningLayer.toBytes(), self.unknownLayer2.toBytes(), self.unknownLayer3.toBytes(), self.unknownSection2, self.unknownSection3)
+        return VOL_V0.structFormat.pack(self.name.toBytes(), self.unknown0, self.unknown1, self.volumeDensity.toBytes(), self.colorDefiningLayer.toBytes(), self.unknownLayer2.toBytes(), self.unknownLayer3.toBytes(), self.unknown2, self.unknown3)
     
     @staticmethod
     def rawBytesForOneOrMore(oneOrMore):
@@ -10376,7 +10384,7 @@ class VOL_V0:
     def createEmptyArray():
         return []
     
-    fieldToBitMaskMapMap = {"unknownSection8": {}, "unknownSection9": {}, "name": {}, "unknownLayer2": {}, "unknown": {}, "colorDefiningLayer": {}, "unknownSection1": {}, "unknownSection7": {}, "unknownSection4": {}, "volumeDensity": {}, "unknownSection2": {}, "unknownLayer3": {}, "unknownSection3": {}}
+    fieldToBitMaskMapMap = {"name": {}, "unknownLayer2": {}, "unknownLayer3": {}, "colorDefiningLayer": {}, "volumeDensity": {}, "unknown2": {}, "unknown3": {}, "unknown0": {}, "unknown1": {}}
     
     def getNamedBit(self, field, bitName):
         mask = VOL_V0.fieldToBitMaskMapMap[field][bitName]
@@ -10394,7 +10402,7 @@ class VOL_V0:
     def getBitNameMaskPairs(self, field):
         return VOL_V0.fieldToBitMaskMapMap[field].items()
     
-    fieldToTypeInfoMap = {"name":FieldTypeInfo("CHARV0",CHARV0, True), "unknown":FieldTypeInfo("uint32",None, False), "unknownSection1":FieldTypeInfo(None,None, False), "unknownSection4":FieldTypeInfo("uint32",None, False), "unknownSection9":FieldTypeInfo("uint32",None, False), "volumeDensity":FieldTypeInfo("float",None, False), "unknownSection7":FieldTypeInfo("float",None, False), "unknownSection8":FieldTypeInfo("float",None, False), "colorDefiningLayer":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknownLayer2":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknownLayer3":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknownSection2":FieldTypeInfo(None,None, False), "unknownSection3":FieldTypeInfo(None,None, False)}
+    fieldToTypeInfoMap = {"name":FieldTypeInfo("CHARV0",CHARV0, True), "unknown0":FieldTypeInfo("uint32",None, False), "unknown1":FieldTypeInfo("uint32",None, False), "volumeDensity":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "colorDefiningLayer":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknownLayer2":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknownLayer3":FieldTypeInfo("LAYRV22",LAYRV22, True), "unknown2":FieldTypeInfo("uint32",None, False), "unknown3":FieldTypeInfo("uint32",None, False)}
     @staticmethod
     def getFieldTypeInfo(fieldName):
         return VOL_V0.fieldToTypeInfoMap[fieldName]
@@ -10407,34 +10415,17 @@ class VOL_V0:
 
         if (instance.name != None) and (type(instance.name) != str):
             raise Exception("%s is not a string but a %s" % (fieldId, type(instance.name) ))
-        fieldId = id + ".unknown"
+        fieldId = id + ".unknown0"
 
-        if (type(instance.unknown) != int):
+        if (type(instance.unknown0) != int):
             raise Exception("%s is not an int" % (fieldId))
-        fieldId = id + ".unknownSection1"
+        fieldId = id + ".unknown1"
 
-        if (type(instance.unknownSection1) != bytes) or (len(instance.unknownSection1) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
-        fieldId = id + ".unknownSection4"
-
-        if (type(instance.unknownSection4) != int):
-            raise Exception("%s is not an int" % (fieldId))
-        fieldId = id + ".unknownSection9"
-
-        if (type(instance.unknownSection9) != int):
+        if (type(instance.unknown1) != int):
             raise Exception("%s is not an int" % (fieldId))
         fieldId = id + ".volumeDensity"
 
-        if (type(instance.volumeDensity) != float):
-            raise Exception("%s is not a float" % (fieldId))
-        fieldId = id + ".unknownSection7"
-
-        if (type(instance.unknownSection7) != float):
-            raise Exception("%s is not a float" % (fieldId))
-        fieldId = id + ".unknownSection8"
-
-        if (type(instance.unknownSection8) != float):
-            raise Exception("%s is not a float" % (fieldId))
+        FloatAnimationReference.validateInstance(instance.volumeDensity, fieldId)
         fieldId = id + ".colorDefiningLayer"
 
         if (type(instance.colorDefiningLayer) != list):
@@ -10453,14 +10444,14 @@ class VOL_V0:
             raise Exception("%s is not a list of %s but a %s" % (fieldId, "LAYRV22", type(instance.unknownLayer3)))
         for itemIndex, item in enumerate(instance.unknownLayer3):
             LAYRV22.validateInstance(item, "%s[%d]" % (fieldId, itemIndex))
-        fieldId = id + ".unknownSection2"
+        fieldId = id + ".unknown2"
 
-        if (type(instance.unknownSection2) != bytes) or (len(instance.unknownSection2) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
-        fieldId = id + ".unknownSection3"
+        if (type(instance.unknown2) != int):
+            raise Exception("%s is not an int" % (fieldId))
+        fieldId = id + ".unknown3"
 
-        if (type(instance.unknownSection3) != bytes) or (len(instance.unknownSection3) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
+        if (type(instance.unknown3) != int):
+            raise Exception("%s is not an int" % (fieldId))
 
 
 class PAR_V12:
@@ -11398,10 +11389,10 @@ class PHSHV1:
     tagVersion = 1
     size = 132
     structFormat = struct.Struct("<72s8s16s8s4s8s16s")
-    fields = ["unknown0", "unknown1", "unknown2", "unknown3", "unknown4", "unknown5", "unknown6"]
+    fields = ["unknown0", "unknown1", "unknown2", "unknown4", "unknown5", "unknown6", "unknown7"]
 
     def __setattr__(self, name, value):
-        if name in ["unknown0", "unknown1", "unknown2", "unknown3", "unknown4", "unknown5", "unknown6"]:
+        if name in ["unknown0", "unknown1", "unknown2", "unknown4", "unknown5", "unknown6", "unknown7"]:
             object.__setattr__(self, name, value)
         else:
             raise NoSuchAttributeException(name)
@@ -11409,7 +11400,7 @@ class PHSHV1:
     def __str__(self):
         s = "{"
         first = True
-        for key in ["unknown0", "unknown1", "unknown2", "unknown3", "unknown4", "unknown5", "unknown6"]:
+        for key in ["unknown0", "unknown1", "unknown2", "unknown4", "unknown5", "unknown6", "unknown7"]:
             if first:
                 first = False
             else:
@@ -11420,8 +11411,8 @@ class PHSHV1:
     
     def resolveReferences(self, sections):
         self.unknown1 = resolveRef(self.unknown1,sections,VEC3V0,"PHSHV1.unknown1")
-        self.unknown3 = resolveRef(self.unknown3,sections,U16_V0,"PHSHV1.unknown3")
-        self.unknown5 = resolveRef(self.unknown5,sections,VEC4V0,"PHSHV1.unknown5")
+        self.unknown4 = resolveRef(self.unknown4,sections,U16_V0,"PHSHV1.unknown4")
+        self.unknown6 = resolveRef(self.unknown6,sections,VEC4V0,"PHSHV1.unknown6")
 
 
     @staticmethod
@@ -11436,12 +11427,12 @@ class PHSHV1:
         indexReference = indexMaker.getIndexReferenceTo(self.unknown1, SmallReference, VEC3V0)
         VEC3V0.introduceIndexReferencesForOneOrMore(self.unknown1,  indexMaker)
         self.unknown1 = indexReference
-        indexReference = indexMaker.getIndexReferenceTo(self.unknown3, SmallReference, U16_V0)
-        U16_V0.introduceIndexReferencesForOneOrMore(self.unknown3,  indexMaker)
-        self.unknown3 = indexReference
-        indexReference = indexMaker.getIndexReferenceTo(self.unknown5, SmallReference, VEC4V0)
-        VEC4V0.introduceIndexReferencesForOneOrMore(self.unknown5,  indexMaker)
-        self.unknown5 = indexReference
+        indexReference = indexMaker.getIndexReferenceTo(self.unknown4, SmallReference, U16_V0)
+        U16_V0.introduceIndexReferencesForOneOrMore(self.unknown4,  indexMaker)
+        self.unknown4 = indexReference
+        indexReference = indexMaker.getIndexReferenceTo(self.unknown6, SmallReference, VEC4V0)
+        VEC4V0.introduceIndexReferencesForOneOrMore(self.unknown6,  indexMaker)
+        self.unknown6 = indexReference
 
 
     @staticmethod
@@ -11463,18 +11454,18 @@ class PHSHV1:
             self.unknown0 = l[0]
             self.unknown1 = SmallReference(rawBytes=l[1])
             self.unknown2 = l[2]
-            self.unknown3 = SmallReference(rawBytes=l[3])
-            self.unknown4 = l[4]
-            self.unknown5 = SmallReference(rawBytes=l[5])
-            self.unknown6 = l[6]
+            self.unknown4 = SmallReference(rawBytes=l[3])
+            self.unknown5 = l[4]
+            self.unknown6 = SmallReference(rawBytes=l[5])
+            self.unknown7 = l[6]
         if (readable == None) and (rawBytes == None):
             self.unknown0 = bytes(72)
             self.unknown1 = VEC3V0.createEmptyArray()
             self.unknown2 = bytes(16)
-            self.unknown3 = U16_V0.createEmptyArray()
-            self.unknown4 = bytes(4)
-            self.unknown5 = VEC4V0.createEmptyArray()
-            self.unknown6 = bytes(16)
+            self.unknown4 = U16_V0.createEmptyArray()
+            self.unknown5 = bytes(4)
+            self.unknown6 = VEC4V0.createEmptyArray()
+            self.unknown7 = bytes(16)
             pass
     @staticmethod
     def createInstances(rawBytes, count):
@@ -11488,7 +11479,7 @@ class PHSHV1:
         return list
     
     def toBytes(self):
-        return PHSHV1.structFormat.pack(self.unknown0, self.unknown1.toBytes(), self.unknown2, self.unknown3.toBytes(), self.unknown4, self.unknown5.toBytes(), self.unknown6)
+        return PHSHV1.structFormat.pack(self.unknown0, self.unknown1.toBytes(), self.unknown2, self.unknown4.toBytes(), self.unknown5, self.unknown6.toBytes(), self.unknown7)
     
     @staticmethod
     def rawBytesForOneOrMore(oneOrMore):
@@ -11520,7 +11511,7 @@ class PHSHV1:
     def createEmptyArray():
         return []
     
-    fieldToBitMaskMapMap = {"unknown2": {}, "unknown3": {}, "unknown0": {}, "unknown1": {}, "unknown6": {}, "unknown4": {}, "unknown5": {}}
+    fieldToBitMaskMapMap = {"unknown2": {}, "unknown0": {}, "unknown1": {}, "unknown6": {}, "unknown7": {}, "unknown4": {}, "unknown5": {}}
     
     def getNamedBit(self, field, bitName):
         mask = PHSHV1.fieldToBitMaskMapMap[field][bitName]
@@ -11538,7 +11529,7 @@ class PHSHV1:
     def getBitNameMaskPairs(self, field):
         return PHSHV1.fieldToBitMaskMapMap[field].items()
     
-    fieldToTypeInfoMap = {"unknown0":FieldTypeInfo(None,None, False), "unknown1":FieldTypeInfo("VEC3V0",VEC3V0, True), "unknown2":FieldTypeInfo(None,None, False), "unknown3":FieldTypeInfo("U16_V0",U16_V0, True), "unknown4":FieldTypeInfo(None,None, False), "unknown5":FieldTypeInfo("VEC4V0",VEC4V0, True), "unknown6":FieldTypeInfo(None,None, False)}
+    fieldToTypeInfoMap = {"unknown0":FieldTypeInfo(None,None, False), "unknown1":FieldTypeInfo("VEC3V0",VEC3V0, True), "unknown2":FieldTypeInfo(None,None, False), "unknown4":FieldTypeInfo("U16_V0",U16_V0, True), "unknown5":FieldTypeInfo(None,None, False), "unknown6":FieldTypeInfo("VEC4V0",VEC4V0, True), "unknown7":FieldTypeInfo(None,None, False)}
     @staticmethod
     def getFieldTypeInfo(fieldName):
         return PHSHV1.fieldToTypeInfoMap[fieldName]
@@ -11561,28 +11552,28 @@ class PHSHV1:
 
         if (type(instance.unknown2) != bytes) or (len(instance.unknown2) != 16):
             raise Exception("%s is not an bytes object of size %s" % (fieldId, "16"))
-        fieldId = id + ".unknown3"
-        if (type(instance.unknown3) != list):
+        fieldId = id + ".unknown4"
+        if (type(instance.unknown4) != list):
             raise Exception("%s is not a list of integers" % (fieldId))
-        for itemIndex, item in enumerate(instance.unknown3):
+        for itemIndex, item in enumerate(instance.unknown4):
             itemId = "%s[%d]" % (fieldId, itemIndex)
             if type(item) != int: 
                 raise Exception("%s is not an integer" % (itemId))
             if (item < 0) or (item > 131071):
                 raise Exception("%s has value %d which is not in range [0, 131071]"  % (itemId, item))
-        fieldId = id + ".unknown4"
-
-        if (type(instance.unknown4) != bytes) or (len(instance.unknown4) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
         fieldId = id + ".unknown5"
 
-        if (type(instance.unknown5) != list):
-            raise Exception("%s is not a list of %s but a %s" % (fieldId, "VEC4V0", type(instance.unknown5)))
-        for itemIndex, item in enumerate(instance.unknown5):
-            VEC4V0.validateInstance(item, "%s[%d]" % (fieldId, itemIndex))
+        if (type(instance.unknown5) != bytes) or (len(instance.unknown5) != 4):
+            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
         fieldId = id + ".unknown6"
 
-        if (type(instance.unknown6) != bytes) or (len(instance.unknown6) != 16):
+        if (type(instance.unknown6) != list):
+            raise Exception("%s is not a list of %s but a %s" % (fieldId, "VEC4V0", type(instance.unknown6)))
+        for itemIndex, item in enumerate(instance.unknown6):
+            VEC4V0.validateInstance(item, "%s[%d]" % (fieldId, itemIndex))
+        fieldId = id + ".unknown7"
+
+        if (type(instance.unknown7) != bytes) or (len(instance.unknown7) != 16):
             raise Exception("%s is not an bytes object of size %s" % (fieldId, "16"))
 
 
@@ -12737,11 +12728,11 @@ class CAM_V3:
     tagName = "CAM_"
     tagVersion = 3
     size = 180
-    structFormat = struct.Struct("<4s12s20s4s20s20s20s20s20s20s20s")
-    fields = ["unknown0", "name", "fovValue", "unknown1", "clipFar", "clipNear", "clip2", "focalDepth", "falloffStart", "falloffEnd", "dof"]
+    structFormat = struct.Struct("<I12s20sI20s20s20s20s20s20s20s")
+    fields = ["boneIndex", "name", "fieldOfView", "unknown", "farClip", "nearClip", "clip2", "focalDepth", "falloffStart", "falloffEnd", "depthOfField"]
 
     def __setattr__(self, name, value):
-        if name in ["unknown0", "name", "fovValue", "unknown1", "clipFar", "clipNear", "clip2", "focalDepth", "falloffStart", "falloffEnd", "dof"]:
+        if name in ["boneIndex", "name", "fieldOfView", "unknown", "farClip", "nearClip", "clip2", "focalDepth", "falloffStart", "falloffEnd", "depthOfField"]:
             object.__setattr__(self, name, value)
         else:
             raise NoSuchAttributeException(name)
@@ -12749,7 +12740,7 @@ class CAM_V3:
     def __str__(self):
         s = "{"
         first = True
-        for key in ["unknown0", "name", "fovValue", "unknown1", "clipFar", "clipNear", "clip2", "focalDepth", "falloffStart", "falloffEnd", "dof"]:
+        for key in ["boneIndex", "name", "fieldOfView", "unknown", "farClip", "nearClip", "clip2", "focalDepth", "falloffStart", "falloffEnd", "depthOfField"]:
             if first:
                 first = False
             else:
@@ -12792,21 +12783,22 @@ class CAM_V3:
             rawBytes = readable.read(CAM_V3.size)
         if rawBytes != None:
             l = CAM_V3.structFormat.unpack(rawBytes)
-            self.unknown0 = l[0]
+            self.boneIndex = l[0]
             self.name = Reference(rawBytes=l[1])
-            self.fovValue = FloatAnimationReference(rawBytes=l[2])
-            self.unknown1 = l[3]
-            self.clipFar = FloatAnimationReference(rawBytes=l[4])
-            self.clipNear = FloatAnimationReference(rawBytes=l[5])
+            self.fieldOfView = FloatAnimationReference(rawBytes=l[2])
+            self.unknown = l[3]
+            if self.unknown != int(1):
+             raise Exception("CAM_V3.unknown has value %s instead of the expected value int(1)" % self.unknown)
+            self.farClip = FloatAnimationReference(rawBytes=l[4])
+            self.nearClip = FloatAnimationReference(rawBytes=l[5])
             self.clip2 = FloatAnimationReference(rawBytes=l[6])
             self.focalDepth = FloatAnimationReference(rawBytes=l[7])
             self.falloffStart = FloatAnimationReference(rawBytes=l[8])
             self.falloffEnd = FloatAnimationReference(rawBytes=l[9])
-            self.dof = FloatAnimationReference(rawBytes=l[10])
+            self.depthOfField = FloatAnimationReference(rawBytes=l[10])
         if (readable == None) and (rawBytes == None):
-            self.unknown0 = bytes(4)
             self.name = CHARV0.createEmptyArray()
-            self.unknown1 = bytes(4)
+            self.unknown = int(1)
             pass
     @staticmethod
     def createInstances(rawBytes, count):
@@ -12820,7 +12812,7 @@ class CAM_V3:
         return list
     
     def toBytes(self):
-        return CAM_V3.structFormat.pack(self.unknown0, self.name.toBytes(), self.fovValue.toBytes(), self.unknown1, self.clipFar.toBytes(), self.clipNear.toBytes(), self.clip2.toBytes(), self.focalDepth.toBytes(), self.falloffStart.toBytes(), self.falloffEnd.toBytes(), self.dof.toBytes())
+        return CAM_V3.structFormat.pack(self.boneIndex, self.name.toBytes(), self.fieldOfView.toBytes(), self.unknown, self.farClip.toBytes(), self.nearClip.toBytes(), self.clip2.toBytes(), self.focalDepth.toBytes(), self.falloffStart.toBytes(), self.falloffEnd.toBytes(), self.depthOfField.toBytes())
     
     @staticmethod
     def rawBytesForOneOrMore(oneOrMore):
@@ -12852,7 +12844,7 @@ class CAM_V3:
     def createEmptyArray():
         return []
     
-    fieldToBitMaskMapMap = {"falloffStart": {}, "focalDepth": {}, "name": {}, "fovValue": {}, "dof": {}, "clip2": {}, "unknown0": {}, "unknown1": {}, "clipFar": {}, "clipNear": {}, "falloffEnd": {}}
+    fieldToBitMaskMapMap = {"name": {}, "focalDepth": {}, "unknown": {}, "fieldOfView": {}, "depthOfField": {}, "clip2": {}, "farClip": {}, "falloffEnd": {}, "nearClip": {}, "falloffStart": {}, "boneIndex": {}}
     
     def getNamedBit(self, field, bitName):
         mask = CAM_V3.fieldToBitMaskMapMap[field][bitName]
@@ -12870,7 +12862,7 @@ class CAM_V3:
     def getBitNameMaskPairs(self, field):
         return CAM_V3.fieldToBitMaskMapMap[field].items()
     
-    fieldToTypeInfoMap = {"unknown0":FieldTypeInfo(None,None, False), "name":FieldTypeInfo("CHARV0",CHARV0, True), "fovValue":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "unknown1":FieldTypeInfo(None,None, False), "clipFar":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "clipNear":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "clip2":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "focalDepth":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "falloffStart":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "falloffEnd":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "dof":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False)}
+    fieldToTypeInfoMap = {"boneIndex":FieldTypeInfo("uint32",None, False), "name":FieldTypeInfo("CHARV0",CHARV0, True), "fieldOfView":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "unknown":FieldTypeInfo("uint32",None, False), "farClip":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "nearClip":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "clip2":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "focalDepth":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "falloffStart":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "falloffEnd":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False), "depthOfField":FieldTypeInfo("FloatAnimationReference",FloatAnimationReference, False)}
     @staticmethod
     def getFieldTypeInfo(fieldName):
         return CAM_V3.fieldToTypeInfoMap[fieldName]
@@ -12879,27 +12871,27 @@ class CAM_V3:
     def validateInstance(instance, id):
         if type(instance) != CAM_V3:
             raise Exception("%s is not of type %s but %s" % (id, "CAM_V3", type(instance)))
-        fieldId = id + ".unknown0"
+        fieldId = id + ".boneIndex"
 
-        if (type(instance.unknown0) != bytes) or (len(instance.unknown0) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
+        if (type(instance.boneIndex) != int):
+            raise Exception("%s is not an int" % (fieldId))
         fieldId = id + ".name"
 
         if (instance.name != None) and (type(instance.name) != str):
             raise Exception("%s is not a string but a %s" % (fieldId, type(instance.name) ))
-        fieldId = id + ".fovValue"
+        fieldId = id + ".fieldOfView"
 
-        FloatAnimationReference.validateInstance(instance.fovValue, fieldId)
-        fieldId = id + ".unknown1"
+        FloatAnimationReference.validateInstance(instance.fieldOfView, fieldId)
+        fieldId = id + ".unknown"
 
-        if (type(instance.unknown1) != bytes) or (len(instance.unknown1) != 4):
-            raise Exception("%s is not an bytes object of size %s" % (fieldId, "4"))
-        fieldId = id + ".clipFar"
+        if (type(instance.unknown) != int):
+            raise Exception("%s is not an int" % (fieldId))
+        fieldId = id + ".farClip"
 
-        FloatAnimationReference.validateInstance(instance.clipFar, fieldId)
-        fieldId = id + ".clipNear"
+        FloatAnimationReference.validateInstance(instance.farClip, fieldId)
+        fieldId = id + ".nearClip"
 
-        FloatAnimationReference.validateInstance(instance.clipNear, fieldId)
+        FloatAnimationReference.validateInstance(instance.nearClip, fieldId)
         fieldId = id + ".clip2"
 
         FloatAnimationReference.validateInstance(instance.clip2, fieldId)
@@ -12912,9 +12904,9 @@ class CAM_V3:
         fieldId = id + ".falloffEnd"
 
         FloatAnimationReference.validateInstance(instance.falloffEnd, fieldId)
-        fieldId = id + ".dof"
+        fieldId = id + ".depthOfField"
 
-        FloatAnimationReference.validateInstance(instance.dof, fieldId)
+        FloatAnimationReference.validateInstance(instance.depthOfField, fieldId)
 
 
 class MODLV23:

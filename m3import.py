@@ -322,6 +322,7 @@ class Importer:
         self.createArmatureObject()
         self.createBones()
         self.createMaterials()
+        self.createCameras()
         self.createParticleSystems()
         self.createAttachmentPoints()
         self.createMesh()
@@ -625,6 +626,21 @@ class Importer:
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
 
+    def createVolumeMaterials(self, scene):
+        for materialIndex, m3Material in enumerate(self.model.volumeMaterials):
+            material = scene.m3_volume_materials.add()
+            animPathPrefix = "m3_volume_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            shared.transferVolumeMaterial(materialTransferer)
+            layerIndex = 0
+            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
+                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
+                materialLayer = material.layers.add()
+                materialLayer.name = layerName
+                animPathPrefix = "m3_volume_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                shared.transferMaterialLayer(layerTransferer)
+                layerIndex += 1
 
     def createMaterialReferences(self, scene):
         for m3MaterialReference in self.model.materialReferences:
@@ -656,6 +672,8 @@ class Importer:
             return self.model.compositeMaterials[materialIndex].name
         elif materialType == shared.terrainMaterialTypeIndex:
             return self.model.terrainMaterials[materialIndex].name
+        elif materialType == shared.volumeMaterialTypeIndex:
+            return self.model.volumeMaterials[materialIndex].name
         else:
             return None
         
@@ -667,8 +685,23 @@ class Importer:
         self.createDisplacementMaterials(scene)
         self.createCompositeMaterials(scene)
         self.createTerrainMaterials(scene)
+        self.createVolumeMaterials(scene)
         self.createMaterialReferences(scene)
 
+    def createCameras(self):
+        scene = bpy.context.scene
+        print("Loading cameras")
+        for cameraIndex, m3Camera in enumerate(self.model.cameras):
+            camera = scene.m3_cameras.add()
+            animPathPrefix = "m3_cameras[%s]." % cameraIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=camera, m3Object=m3Camera)
+            shared.transferCamera(transferer)
+            m3Bone = self.model.bones[m3Camera.boneIndex]
+            if m3Bone.name != camera.name:
+                raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
+            
+            
+            
     def createParticleSystems(self):
         currentScene = bpy.context.scene
         print("Loading particle systems")

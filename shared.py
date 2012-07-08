@@ -35,11 +35,16 @@ displacementMaterialLayerNames = ["Normal", "Strength"]
 terrainMaterialLayerFieldNames = ["layer"]
 terrainMaterialLayerNames = ["Terrain"]
 
+volumeMaterialLayerFieldNames = ["colorDefiningLayer", "unknownLayer2", "unknownLayer3"]
+volumeMaterialLayerNames = ["Color Defining Layer", "Layer 2", "Layer 3"]
+
+
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
+volumeMaterialTypeIndex = 5
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                  (-1, 0, 0, 0),
@@ -101,6 +106,8 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
         return scene.m3_composite_materials[materialIndex] 
     elif materialTypeIndex == terrainMaterialTypeIndex:
         return scene.m3_terrain_materials[materialIndex] 
+    elif materialTypeIndex == volumeMaterialTypeIndex:
+        return scene.m3_volume_materials[materialIndex] 
     return None
 
 def sqr(x):
@@ -285,7 +292,11 @@ def transferCompositeMaterialSection(transferer):
 
 def transferTerrainMaterial(transferer):
     transferer.transferString("name")
-    
+
+def transferVolumeMaterial(transferer):
+    transferer.transferString("name")
+    transferer.transferAnimatableFloat("volumeDensity")
+
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
     transferer.transferInt("unknown11")
@@ -313,3 +324,15 @@ def transferAnimation(transferer):
     transferer.transferBit("flags", "notLooping")
     transferer.transferBit("flags", "alwaysGlobal")
     transferer.transferBit("flags", "globalInPreviewer")
+    
+def transferCamera(transferer):
+    transferer.transferString("name")
+    transferer.transferAnimatableFloat("fieldOfView")
+    transferer.transferAnimatableFloat("farClip")
+    transferer.transferAnimatableFloat("nearClip")
+    transferer.transferAnimatableFloat("clip2")
+    transferer.transferAnimatableFloat("focalDepth")
+    transferer.transferAnimatableFloat("falloffStart")
+    transferer.transferAnimatableFloat("falloffEnd")
+    transferer.transferAnimatableFloat("depthOfField")
+
