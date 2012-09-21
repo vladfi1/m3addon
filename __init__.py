@@ -706,7 +706,6 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
 
 
-
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
 
@@ -753,7 +752,6 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'alwaysGlobal', text="Always Global")
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
 
-
 class MaterialReferencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_references"
     bl_label = "M3 Materials"
@@ -772,6 +770,7 @@ class MaterialReferencesPanel(bpy.types.Panel):
         col = row.column(align=True)
         col.operator("m3.materials_add", icon='ZOOMIN', text="")
         col.operator("m3.materials_remove", icon='ZOOMOUT', text="")
+        layout.operator("m3.convert_materials", text="Convert Materials")
 
 class MaterialPropertiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_properties"
@@ -849,7 +848,7 @@ class MaterialPropertiesPanel(bpy.types.Panel):
             else:
                 layout.label(text=("Unsupported material type %d" % materialType))
 
-class MatrialLayersPanel(bpy.types.Panel):
+class MaterialLayersPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_layers"
     bl_label = "M3 Material Layers"
     bl_space_type = 'PROPERTIES'
@@ -1405,8 +1404,113 @@ class ExtraBonePropertiesPanel(bpy.types.Panel):
         col = row.column()
         layout.prop(bone, 'm3_unapplied_scale', text="Unapplied Scale")
 
+def convertMaterialToM3(scene, material):
+    m3_material = addM3Material(scene, "MESH", material.name)
+    #m3_material.noShadowsCast = not material.use_shadows
+    m3_material.layers['Diffuse'].imagePath = material.active_texture.image.name
+    
+class M3_OT_convertMaterials(bpy.types.Operator):
+    bl_idname = "m3.convert_materials"
+    bl_label = "Convert Materials to M3"
+    bl_description = "Converts existing Blender Materials into M3 Materials"
 
+    def invoke(self, context, event):
+        scene = context.scene
+        for mesh in bpy.data.meshes:
+            if len(mesh.materials) != 0:
+                if len(mesh.materials) == 1:
+                    mat = mesh.materials[0]
+                    if mat.active_texture.type == 'IMAGE':
+                        convertMaterialToM3(scene, mat)
+                        mesh.m3_material_name = mat.name
+                else:
+                    print("Error: The mesh %s has more than one texture!" % mesh.name)
+        return {'FINISHED'}            
 
+def addM3Material(scene, type, name):
+	defaultSettingMesh = "MESH"
+	defaultSettingParticle = "PARTICLE"
+	defaultSettingDisplacement = "DISPLACEMENT"
+	defaultSettingComposite = "COMPOSITE"
+	defaultSettingTerrain = "TERRAIN"
+	defaultSettingVolume = "VOLUME"
+
+	if type in [defaultSettingMesh, defaultSettingParticle]:
+		materialType = shared.standardMaterialTypeIndex
+		materialIndex = len(scene.m3_standard_materials)
+		material = scene.m3_standard_materials.add()
+		for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
+			layer = material.layers.add()
+			layer.name = layerName
+			if layerFieldName == "diffuseLayer":
+				if type != defaultSettingParticle:
+					layer.alphaAsTeamColor = True
+			if layerFieldName == "evioMaskLayer":
+				layer.alphaOnly = True
+			elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
+				layer.textureWrapX = False
+				layer.textureWrapY = False
+				layer.alphaAsTeamColor = True
+			elif layerFieldName == "heightLayer":
+				layer.textureWrapX = False
+				layer.textureWrapY = False
+				layer.alphaOnly = True
+		
+		if type == defaultSettingParticle:
+			material.unfogged = True
+			material.blendMode = "2"
+			material.layerBlendType = "2"
+			material.emisBlendType = "2"
+			material.noShadowsCast = True
+			material.noHitTest = True
+			material.noShadowsReceived = True
+			material.forParticles = True
+			material.unknownFlag0x1 = True
+			material.unknownFlag0x2 = True
+			material.unknownFlag0x8 = True
+	elif type == defaultSettingDisplacement:
+		materialType = shared.displacementMaterialTypeIndex
+		materialIndex = len(scene.m3_displacement_materials)
+		material = scene.m3_displacement_materials.add()
+		for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
+			layer = material.layers.add()
+			layer.name = layerName
+	elif type == defaultSettingComposite:
+		materialType = shared.compositeMaterialTypeIndex
+		materialIndex = len(scene.m3_composite_materials)
+		material = scene.m3_composite_materials.add()
+	elif type == defaultSettingTerrain:
+		materialType = shared.terrainMaterialTypeIndex
+		materialIndex = len(scene.m3_terrain_materials)
+		material = scene.m3_terrain_materials.add()
+		for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
+			layer = material.layers.add()
+			layer.name = layerName
+	elif type == defaultSettingVolume:
+		materialType = shared.volumeMaterialTypeIndex
+		materialIndex = len(scene.m3_volume_materials)
+		material = scene.m3_volume_materials.add()
+		for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
+			layer = material.layers.add()
+			layer.name = layerName
+	elif type == defaultSettingTerrain:
+		materialType = shared.volumeMaterialTypeIndex
+		materialIndex = len(scene.m3_volume_materials)
+		material = scene.m3_volume_materials.add()
+		for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
+			layer = material.layers.add()
+			layer.name = layerName
+
+	materialReferenceIndex = len(scene.m3_material_references)
+	materialReference = scene.m3_material_references.add()
+	materialReference.materialIndex = materialIndex
+	materialReference.materialType = materialType
+	material.materialReferenceIndex = materialReferenceIndex
+	material.name = name # will also set materialReference name
+	scene.m3_material_reference_index = len(scene.m3_material_references)-1
+	
+	return material
+        
 class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'
     bl_label       = "Add M3 Material"
@@ -1427,89 +1531,9 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         layout.prop(self, "name", text="Name") 
   
     def execute(self, context):
-        scene = context.scene
-        defaultSettingMesh = "MESH"
-        defaultSettingParticle = "PARTICLE"
-        defaultSettingDisplacement = "DISPLACEMENT"
-        defaultSettingComposite = "COMPOSITE"
-        defaultSettingTerrain = "TERRAIN"
-        defaultSettingVolume = "VOLUME"
-
-        if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
-            materialType = shared.standardMaterialTypeIndex
-            materialIndex = len(scene.m3_standard_materials)
-            material = scene.m3_standard_materials.add()
-            for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
-                layer = material.layers.add()
-                layer.name = layerName
-                if layerFieldName == "diffuseLayer":
-                    if self.defaultSetting != defaultSettingParticle:
-                        layer.alphaAsTeamColor = True
-                if layerFieldName == "evioMaskLayer":
-                    layer.alphaOnly = True
-                elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
-                    layer.textureWrapX = False
-                    layer.textureWrapY = False
-                    layer.alphaAsTeamColor = True
-                elif layerFieldName == "heightLayer":
-                    layer.textureWrapX = False
-                    layer.textureWrapY = False
-                    layer.alphaOnly = True
-            
-            if self.defaultSetting == defaultSettingParticle:
-                material.unfogged = True
-                material.blendMode = "2"
-                material.layerBlendType = "2"
-                material.emisBlendType = "2"
-                material.noShadowsCast = True
-                material.noHitTest = True
-                material.noShadowsReceived = True
-                material.forParticles = True
-                material.unknownFlag0x1 = True
-                material.unknownFlag0x2 = True
-                material.unknownFlag0x8 = True
-        elif self.defaultSetting == defaultSettingDisplacement:
-            materialType = shared.displacementMaterialTypeIndex
-            materialIndex = len(scene.m3_displacement_materials)
-            material = scene.m3_displacement_materials.add()
-            for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingComposite:
-            materialType = shared.compositeMaterialTypeIndex
-            materialIndex = len(scene.m3_composite_materials)
-            material = scene.m3_composite_materials.add()
-        elif self.defaultSetting == defaultSettingTerrain:
-            materialType = shared.terrainMaterialTypeIndex
-            materialIndex = len(scene.m3_terrain_materials)
-            material = scene.m3_terrain_materials.add()
-            for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingVolume:
-            materialType = shared.volumeMaterialTypeIndex
-            materialIndex = len(scene.m3_volume_materials)
-            material = scene.m3_volume_materials.add()
-            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingTerrain:
-            materialType = shared.volumeMaterialTypeIndex
-            materialIndex = len(scene.m3_volume_materials)
-            material = scene.m3_volume_materials.add()
-            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
-                layer = material.layers.add()
-                layer.name = layerName
-        materialReferenceIndex = len(scene.m3_material_references)
-        materialReference = scene.m3_material_references.add()
-        materialReference.materialIndex = materialIndex
-        materialReference.materialType = materialType
-        material.materialReferenceIndex = materialReferenceIndex
-        material.name = self.name # will also set materialReference name
-
-
-        scene.m3_material_reference_index = len(scene.m3_material_references)-1
+        addM3Material(context.scene, self.defaultSetting, self.name)
         return {'FINISHED'}
+
     def findUnusedName(self, scene):
         usedNames = set()
         for materialReferenceIndex in range(0, len(scene.m3_material_references)):
@@ -2027,14 +2051,12 @@ class M3_OT_import(bpy.types.Operator, ImportHelper):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-        
-
 def menu_func_import(self, context):
     self.layout.operator(M3_OT_import.bl_idname, text="Starcraft 2 Model (.m3)...")
     
 def menu_func_export(self, context):
     self.layout.operator(M3_OT_export.bl_idname, text="Starcraft 2 Model (.m3)...")
- 
+
 def register():
     bpy.utils.register_module(__name__)
 
@@ -2069,7 +2091,6 @@ def register():
     bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
 
- 
 def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
