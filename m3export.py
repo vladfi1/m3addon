@@ -183,30 +183,30 @@ class Exporter:
                 animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
                 for animation, action in animationActionTuples:
                     frames = set()
-                    frames.update(self.getFramesFor(action, locationAnimPath, 0))
-                    frames.update(self.getFramesFor(action, locationAnimPath, 1))
-                    frames.update(self.getFramesFor(action, locationAnimPath, 2))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 0))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 1))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 2))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 3))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 0))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 1))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 2))
+                    frames.update(self.getFramesFor(animation, action, locationAnimPath, 0))
+                    frames.update(self.getFramesFor(animation, action, locationAnimPath, 1))
+                    frames.update(self.getFramesFor(animation, action, locationAnimPath, 2))
+                    frames.update(self.getFramesFor(animation, action, rotationAnimPath, 0))
+                    frames.update(self.getFramesFor(animation, action, rotationAnimPath, 1))
+                    frames.update(self.getFramesFor(animation, action, rotationAnimPath, 2))
+                    frames.update(self.getFramesFor(animation, action, rotationAnimPath, 3))
+                    frames.update(self.getFramesFor(animation, action, scaleAnimPath, 0))
+                    frames.update(self.getFramesFor(animation, action, scaleAnimPath, 1))
+                    frames.update(self.getFramesFor(animation, action, scaleAnimPath, 2))
                     frames = list(frames)
                     frames.sort()
                     timeValuesInMS = self.allFramesToMSValues(frames)
 
-                    xLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 0, frames)
-                    yLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 1, frames)
-                    zLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 2, frames)
-                    wRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 0, frames)
-                    xRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 1, frames)
-                    yRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 2, frames)
-                    zRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 3, frames)
-                    xScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 0, frames)
-                    yScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 1, frames)
-                    zScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 2, frames)
+                    xLocValues = self.getNoneOrValuesFor(animation, action, locationAnimPath, 0, frames)
+                    yLocValues = self.getNoneOrValuesFor(animation, action, locationAnimPath, 1, frames)
+                    zLocValues = self.getNoneOrValuesFor(animation, action, locationAnimPath, 2, frames)
+                    wRotValues = self.getNoneOrValuesFor(animation, action, rotationAnimPath, 0, frames)
+                    xRotValues = self.getNoneOrValuesFor(animation, action, rotationAnimPath, 1, frames)
+                    yRotValues = self.getNoneOrValuesFor(animation, action, rotationAnimPath, 2, frames)
+                    zRotValues = self.getNoneOrValuesFor(animation, action, rotationAnimPath, 3, frames)
+                    xScaValues = self.getNoneOrValuesFor(animation, action, scaleAnimPath, 0, frames)
+                    yScaValues = self.getNoneOrValuesFor(animation, action, scaleAnimPath, 1, frames)
+                    zScaValues = self.getNoneOrValuesFor(animation, action, scaleAnimPath, 2, frames)
 
                     locAnimated = (xLocValues != None) or (yLocValues != None) or (zLocValues != None)
                     rotAnimated = (wRotValues != None) or (xRotValues != None) or (yRotValues != None) or (zRotValues != None)
@@ -257,7 +257,7 @@ class Exporter:
                             m3AnimBlock = m3.SD3VV0()
                             m3AnimBlock.frames = locationTimeValuesInMS
                             m3AnimBlock.flags = 0
-                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.fend = self.frameToMS(animation.numFrames())
                             m3AnimBlock.keys = m3Locs
                             animIdToAnimDataMap[locationAnimId] = m3AnimBlock
                             bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
@@ -269,7 +269,7 @@ class Exporter:
                             m3AnimBlock = m3.SD4QV0()
                             m3AnimBlock.frames = rotationTimeValuesInMS
                             m3AnimBlock.flags = 0
-                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.fend = self.frameToMS(animation.numFrames())
                             m3AnimBlock.keys = m3Rots
                             animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
                             bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
@@ -281,7 +281,7 @@ class Exporter:
                             m3AnimBlock = m3.SD3VV0()
                             m3AnimBlock.frames = scaleTimeValuesInMS
                             m3AnimBlock.flags = 0
-                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.fend = self.frameToMS(animation.numFrames())
                             m3AnimBlock.keys = m3Scas
                             animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
@@ -604,9 +604,9 @@ class Exporter:
     
     def createAnimationEndEvent(self, animation):
         event = m3.SDEVV0()
-        event.frames = [self.frameToMS(animation.exlusiveEndFrame)]
+        event.frames = [self.frameToMS(animation.numFrames())]
         event.flags = 1
-        event.fend = self.frameToMS(animation.exlusiveEndFrame)
+        event.fend = self.frameToMS(animation.numFrames())
         event.keys = [self.createAnimationEndEventKey(animation)]
         return event
         
@@ -624,8 +624,10 @@ class Exporter:
             animIds.sort()
             
             m3Sequence = m3.SEQSV1()
-            m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
-            m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
+            #m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
+            #m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
+            m3Sequence.animStartInMS = 0
+            m3Sequence.animEndInMS = self.frameToMS(animation.numFrames())
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, rootObject=self.scene)
             shared.transferAnimation(transferer)
             m3Sequence.boundingSphere = self.createAlmostEmptyBoundingsWithRadius(2)
@@ -1193,16 +1195,16 @@ class Exporter:
             timeValues.append(timeInMS)
         return timeValues
     
-    def getNoneOrValuesFor(self, action, animPath, curveArrayIndex, frames):
+    def getNoneOrValuesFor(self, animation, action, animPath, curveArrayIndex, frames):
         values = []
         curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
         if curve == None:
             return None
         for frame in frames:
-            values.append(curve.evaluate(frame))
+            values.append(curve.evaluate(frame + animation.startFrame))
         return values
     
-    def getFramesFor(self, action, animPath, curveArrayIndex):
+    def getFramesFor(self, animation, action, animPath, curveArrayIndex):
         frames = []
         curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
         if curve == None:
@@ -1216,7 +1218,14 @@ class Exporter:
             frames.append(frame)
             lastInterpolation = keyframePoint.interpolation
             lastFrame = frame
-        return frames
+    
+        relevantFrames = [0]
+        for frame in frames:
+            if frame > animation.startFrame and frame < animation.exlusiveEndFrame:
+                relevantFrames.append(frame - animation.startFrame)
+        relevantFrames.append(animation.numFrames())
+        
+        return relevantFrames
     
     def findFCurveWithPathAndIndex(self, action, animPath, curveArrayIndex):
         for curve in action.fcurves:
@@ -1293,14 +1302,14 @@ class BlenderToM3DataTransferer:
         for animation, action in self.animationActionTuples:
             frames = set()
             for i in range(4):
-                frames.update(self.exporter.getFramesFor(action, animPath, i))
+                frames.update(self.exporter.getFramesFor(animation, action, animPath, i))
             frames = list(frames)
             frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
-            redValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
-            greenValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
-            blueValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
-            alphaValues = self.exporter.getNoneOrValuesFor(action, animPath, 3, frames)
+            redValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 0, frames)
+            greenValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 1, frames)
+            blueValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 2, frames)
+            alphaValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 3, frames)
             if (redValues != None) or (greenValues != None) or (blueValues != None) or (alphaValues != None):
                 if redValues == None:
                     redValues = len(timeValuesInMS) * [m3DefaultColor.red]
@@ -1318,7 +1327,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = m3.SDCCV0()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.numFrames())
                 m3AnimBlock.keys = colors
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
@@ -1337,10 +1346,10 @@ class BlenderToM3DataTransferer:
         animRef.initValue = defaultValue
         animRef.nullValue = type(defaultValue)(0)
         for animation, action in self.animationActionTuples:
-            frames = list(set(self.exporter.getFramesFor(action, animPath, 0)))
+            frames = list(set(self.exporter.getFramesFor(animation, action, animPath, 0)))
             frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
-            values = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
+            values = self.exporter.getNoneOrValuesFor(animation, action, animPath, 0, frames)
             if values != None:
                 convertedValues = []
                 for value in values:
@@ -1348,7 +1357,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = animDataClass()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.numFrames())
                 m3AnimBlock.keys = convertedValues
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
@@ -1356,13 +1365,11 @@ class BlenderToM3DataTransferer:
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
         setattr(self.m3Object, fieldName, animRef)
-   
         
     def transferAnimatableFloat(self, fieldName):
         def identity(value):
             return value
-        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass=m3.FloatAnimationReference, animRefFlags=1, animDataClass=m3.SDR3V0,convertMethod=identity)
-        
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass=m3.FloatAnimationReference, animRefFlags=1, animDataClass=m3.SDR3V0, convertMethod=identity)
 
     def transferAnimatableInt16(self, fieldName):
         def toInt16Value(value):
@@ -1392,13 +1399,13 @@ class BlenderToM3DataTransferer:
         for animation, action in self.animationActionTuples:
             frames = set()
             for i in range(3):
-                frames.update(self.exporter.getFramesFor(action, animPath, i))
+                frames.update(self.exporter.getFramesFor(animation, action, animPath, i))
             frames = list(frames)
             frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
-            xValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
-            yValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
-            zValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
+            xValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 0, frames)
+            yValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 1, frames)
+            zValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 2, frames)
             if (xValues != None) or (yValues != None) or (zValues != None):
                 if xValues == None:
                     xValues = len(timeValuesInMS) * [currentBVector.x]
@@ -1414,7 +1421,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = m3.SD3VV0()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.numFrames())
                 m3AnimBlock.keys = vectors
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
@@ -1440,12 +1447,12 @@ class BlenderToM3DataTransferer:
         for animation, action in self.animationActionTuples:
             frames = set()
             for i in range(2):
-                frames.update(self.exporter.getFramesFor(action, animPath, i))
+                frames.update(self.exporter.getFramesFor(animation, action, animPath, i))
             frames = list(frames)
             frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
-            xValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
-            yValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
+            xValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 0, frames)
+            yValues = self.exporter.getNoneOrValuesFor(animation, action, animPath, 1, frames)
             if (xValues != None) or (yValues != None):
                 if xValues == None:
                     xValues = len(timeValuesInMS) * [currentBVector.x]
@@ -1460,14 +1467,13 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = m3.SD2VV0()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.numFrames())
                 m3AnimBlock.keys = vectors
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
-        
         
     def transferInt(self, fieldName):
         value = getattr(self.blenderObject, fieldName)

@@ -464,6 +464,9 @@ class M3Animation(bpy.types.PropertyGroup):
     notLooping = bpy.props.BoolProperty(options=set())
     alwaysGlobal = bpy.props.BoolProperty(options=set())
     globalInPreviewer = bpy.props.BoolProperty(options=set())
+    
+    def numFrames(self):
+        return self.exlusiveEndFrame - self.startFrame
 
 class M3MaterialLayer(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"}, default="Material Layer")
