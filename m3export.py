@@ -1274,7 +1274,7 @@ class Exporter:
         for frame in frames:
             if frame > animation.startFrame and frame < animation.exlusiveEndFrame:
                 relevantFrames.append(frame - animation.startFrame)
-        relevantFrames.append(animation.numFrames())
+        #relevantFrames.append(animation.numFrames())
         
         return relevantFrames
     
